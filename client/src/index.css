@@ -1,0 +1,380 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  CSS-переменные цветовой системы Shadcn UI (тема "slate").
+  Все цвета задаются в формате HSL без функции hsl(),
+  чтобы Tailwind мог подставлять opacity: bg-primary/50.
+*/
+@layer base {
+  :root {
+    --background:   0 0% 100%;
+    --foreground:   222.2 84% 4.9%;
+
+    --card:         0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover:      0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary:      222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary:    210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted:        210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent:       210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive:  0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border:       214.3 31.8% 91.4%;
+    --input:        214.3 31.8% 91.4%;
+    --ring:         222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  /* Тёмная тема (переключается классом .dark на <html>) */
+  .dark {
+    --background:   222.2 84% 4.9%;
+    --foreground:   210 40% 98%;
+
+    --card:         222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover:      222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary:      210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary:    217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted:        217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent:       217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive:  0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border:       217.2 32.6% 17.5%;
+    --input:        217.2 32.6% 17.5%;
+    --ring:         212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ── Пин-маркер на карте поиска (форма капли, иконка типа активности внутри) ── */
+.route-marker-pin {
+  position: relative;
+  width: 32px;
+  height: 40px;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+  box-sizing: border-box;
+}
+
+/* Форма пина (капля): круг сверху, остриё вниз по центру, чёрный по референсу */
+.route-marker-pin::before {
+  content: '';
+  position: absolute;
+  background-color: #111827;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  transform-origin: bottom center;
+  bottom: 2px;
+  left: 50%;
+  margin-left: -14px;
+  width: 28px;
+  height: 28px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.route-marker-pin__icon {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+.route-marker-pin:hover,
+.route-marker-pin--hover {
+  transform: scale(1.1);
+}
+
+.route-marker-pin--hover::before {
+  background-color: #2563eb;
+}
+
+/* ── Кластер маркеров в стиле MapMagic: чёрная капля с белым числом ───────── */
+.route-cluster-pin {
+  position: relative;
+  width: 40px;
+  height: 48px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 4px;
+  box-sizing: border-box;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+.route-cluster-pin::before {
+  content: '';
+  position: absolute;
+  background-color: #111827;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  transform-origin: bottom center;
+  bottom: 2px;
+  left: 50%;
+  margin-left: -18px;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.route-cluster-pin__count {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Капля (teardrop) для POI по референсу ──────────────────────────────────── */
+
+.poi-teardrop-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.poi-teardrop-marker__inner {
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #fff;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.2));
+}
+
+.poi-teardrop-marker__inner svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ── POI-маркеры на карте детального просмотра маршрута ───────────────────── */
+
+/* Обёртка маркера (для бейджа «несколько фото») */
+.poi-marker-wrap {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+}
+.poi-marker-wrap--teardrop {
+  width: 32px;
+  height: 32px;
+}
+
+/* Бейдж: количество фото на маркере (показывается при 2+ фото), сверху справа */
+.poi-marker-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+.poi-marker-wrap--teardrop .poi-marker-badge {
+  top: -4px;
+  right: -4px;
+}
+
+/* Базовый маркер: круг 36×36 с тенью */
+.poi-marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poi-marker:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Маркер с мини-фото в кружке */
+.poi-marker--photo {
+  background-size: cover;
+  background-position: center;
+}
+
+/* Маркер без фото: оранжевый фон + белая иконка-булавка */
+.poi-marker--icon {
+  background-color: #f97316;
+  color: #fff;
+}
+
+.poi-marker--icon svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Popup детального места ──────────────────────────────────────────────── */
+.poi-detail-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.poi-detail-popup .leaflet-popup-content {
+  margin: 12px;
+  min-width: 200px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.poi-detail-popup .poi-popup-header-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Галерея фото в popup метки: горизонтальный скролл при большом количестве */
+.poi-detail-popup .poi-popup-gallery {
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.poi-detail-popup .poi-popup-gallery::-webkit-scrollbar {
+  height: 6px;
+}
+.poi-detail-popup .poi-popup-gallery::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.poi-detail-popup .leaflet-popup-tip-container {
+  margin-top: -1px;
+}
+
+/* ── Popup редактирования метки в конструкторе (без отступов Leaflet) ─────── */
+.point-edit-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--border);
+}
+
+.point-edit-popup .leaflet-popup-content {
+  margin: 0;
+  min-width: 280px;
+  max-width: 280px;
+}
+
+/* Подпись названия рядом с меткой (капля) на карте */
+.poi-label-tooltip {
+  margin-left: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-weight: 500;
+  color: #374151 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+  white-space: pre-line;
+  max-width: 160px;
+}
+.poi-label-tooltip::before {
+  border-right-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Страница поиска маршрутов: убираем скролл у окна (скролл списка слева сохраняется) */
+html.search-page-no-scroll,
+html.search-page-no-scroll body {
+  overflow: hidden !important;
+  height: 100% !important;
+  overscroll-behavior: none;
+}
+html.search-page-no-scroll #root,
+html.search-page-no-scroll main {
+  overflow: hidden !important;
+}
+
+/* Live-навигация: контролы Leaflet (зум, копирайт) не залезают под панель браузера на мобильных */
+.live-nav-map .leaflet-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
