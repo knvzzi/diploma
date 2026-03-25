@@ -180,6 +180,17 @@ export default function CreateRoutePage() {
           throw new Error(routeError?.message || 'Маршрут не найден');
         }
 
+        // Защита: если открыт режим редактирования чужого маршрута (не ?clone=),
+        // автоматически переключаемся в режим клонирования — редактировать чужой нельзя.
+        if (editFromUrl && !cloneFromUrl && routeRow.author_id && user?.id) {
+          if (String(routeRow.author_id) !== String(user.id)) {
+            if (!cancelled) {
+              navigate(`/create?clone=${editFromUrl}`, { replace: true });
+            }
+            return;
+          }
+        }
+
         const { data: daysRows, error: daysError } = await supabase
           .from('days')
           .select('id, day_number, title, distance, elevation_gain')

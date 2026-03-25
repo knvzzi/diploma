@@ -13,42 +13,29 @@ app.get('/api/routes/public', async (req, res) => {
   try {
     const supabase = getSupabaseAnon();
 
-    // Стабильный набор полей + left join на profiles(full_name, avatar_url).
-    // distance в ответе = total_distance; duration в ответе — если есть колонка, иначе null.
-    const selectFields = `
-      id, title, description, activity_type, total_distance, total_elevation, duration, author_id, is_public, likes_count, parent_id, parent_route_id, cover_image_url, created_at,
-      author:profiles(id, username, full_name, last_name, avatar_url)
-    `;
-    let routes;
-    const { data: dataWithJoin, error: joinError } = await supabase
+    // Загружаем маршруты без join на profiles — join через alias ненадёжен
+    // при наличии нескольких FK от routes к profiles (Supabase может взять не тот).
+    // Профили подгружаем отдельным запросом по уникальным author_id.
+    const { data: dataPlain, error: plainError } = await supabase
       .from('routes')
-      .select(selectFields)
+      .select('id, title, description, activity_type, total_distance, total_elevation, duration, author_id, is_public, likes_count, parent_id, parent_route_id, cover_image_url, created_at')
       .eq('is_public', true)
       .order('created_at', { ascending: false });
 
-    if (joinError) {
-      const { data: dataPlain, error: plainError } = await supabase
-        .from('routes')
-        .select('id, title, description, activity_type, total_distance, author_id, is_public, likes_count, parent_id, parent_route_id, cover_image_url, created_at')
-        .eq('is_public', true)
-        .order('created_at', { ascending: false });
+    if (plainError) {
+      console.error('[GET /api/routes/public] routes:', plainError);
+      return res.status(500).json({ error: plainError.message });
+    }
 
-      if (plainError) {
-        console.error('[GET /api/routes/public] routes:', plainError);
-        return res.status(500).json({ error: plainError.message });
-      }
-      routes = (dataPlain ?? []).map((r) => ({ ...r, author: null }));
-      const authorIds = [...new Set(routes.map((r) => r.author_id).filter(Boolean))];
-      if (authorIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, last_name, avatar_url')
-          .in('id', authorIds);
-        const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
-        routes = routes.map((r) => ({ ...r, author: byId.get(r.author_id) ?? null }));
-      }
-    } else {
-      routes = dataWithJoin ?? [];
+    let routes = (dataPlain ?? []).map((r) => ({ ...r, author: null }));
+    const authorIds = [...new Set(routes.map((r) => r.author_id).filter(Boolean))];
+    if (authorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, last_name, avatar_url')
+        .in('id', authorIds);
+      const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+      routes = routes.map((r) => ({ ...r, author: byId.get(r.author_id) ?? null }));
     }
 
     if (!routes?.length) {
