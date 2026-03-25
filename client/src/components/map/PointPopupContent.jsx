@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { Check, ChevronDown, ImagePlus, Loader2 } from 'lucide-react';
 import { uploadFile, validateImageFile } from '@/lib/uploadFile';
@@ -46,7 +47,9 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
   const [isUploading, setIsUploading] = useState(false);
   const [imgErrors, setImgErrors] = useState({});
   const [iconOpen, setIconOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const fileInputRef = useRef(null);
+  const iconBtnRef = useRef(null);
   const iconDropdownRef = useRef(null);
 
   const currentIconEntry = POI_ICONS.find((i) => i.id === icon) ?? POI_ICONS[0];
@@ -65,6 +68,7 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
   };
 
   const handleSave = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     onSave(point.id, {
       name: name.trim(),
@@ -76,6 +80,7 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
   };
 
   const handleDelete = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     onDelete(point.id);
   };
@@ -84,6 +89,19 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
     setIcon(id);
     pushMeta({ icon: id });
     setIconOpen(false);
+  };
+
+  const handleIconBtnClick = (e) => {
+    e.stopPropagation();
+    if (!iconOpen && iconBtnRef.current) {
+      const rect = iconBtnRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+    setIconOpen((v) => !v);
   };
 
   const handleUploadClick = (e) => {
@@ -139,10 +157,15 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
 
   useEffect(() => {
     const close = (e) => {
-      if (iconDropdownRef.current && !iconDropdownRef.current.contains(e.target)) setIconOpen(false);
+      if (
+        iconDropdownRef.current && !iconDropdownRef.current.contains(e.target) &&
+        iconBtnRef.current && !iconBtnRef.current.contains(e.target)
+      ) {
+        setIconOpen(false);
+      }
     };
-    if (iconOpen) document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
+    if (iconOpen) document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
   }, [iconOpen]);
 
   const categories = [...new Set(POI_ICONS.map((i) => i.category))];
@@ -159,7 +182,7 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
             key={c.value}
             type="button"
             title={c.label}
-            onClick={(e) => {
+            onMouseDown={(e) => {
               e.stopPropagation();
               setColor(c.value);
               pushMeta({ color: c.value });
@@ -177,19 +200,31 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
         ))}
       </div>
 
-      {/* ── Выбор иконки: кнопка-селект + Popover с сеткой по категориям ────── */}
-      <div className={`relative ${iconOpen ? 'z-[9999]' : ''}`} ref={iconDropdownRef}>
+      {/* ── Выбор иконки: кнопка-селект + Popover через portal (вне попапа карты) ── */}
+      <div className="relative">
         <button
+          ref={iconBtnRef}
           type="button"
-          onClick={(e) => { e.stopPropagation(); setIconOpen((v) => !v); }}
+          onClick={handleIconBtnClick}
           className="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
         >
           {CurrentIcon && <CurrentIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={2} />}
           <span className="truncate">{currentIconEntry?.label ?? 'Иконка'}</span>
           <ChevronDown className={`ml-auto h-4 w-4 shrink-0 text-slate-400 transition-transform ${iconOpen ? 'rotate-180' : ''}`} />
         </button>
-        {iconOpen && (
-          <div className="absolute left-0 right-0 top-full z-[9999] mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+        {iconOpen && createPortal(
+          <div
+            ref={iconDropdownRef}
+            style={{
+              position: 'fixed',
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              width: dropdownPos.width,
+              zIndex: 99999,
+            }}
+            className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             {categories.map((cat) => (
               <div key={cat} className="mb-2 last:mb-0">
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{cat}</p>
@@ -199,7 +234,7 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
                       key={id}
                       type="button"
                       title={label}
-                      onClick={(e) => { e.stopPropagation(); handleIconSelect(id); }}
+                      onMouseDown={(e) => { e.stopPropagation(); handleIconSelect(id); }}
                       className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-slate-100 focus:outline-none ${icon === id ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-400/60' : 'text-slate-800'}`}
                     >
                       <Icon className="h-5 w-5" strokeWidth={1.5} />
@@ -208,7 +243,8 @@ export default function PointPopupContent({ point, index, onSave, onDelete, onPh
                 </div>
               </div>
             ))}
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
 

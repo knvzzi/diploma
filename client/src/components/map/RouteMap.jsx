@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, useState, Fragment } from 'react';
+import { useRef, useMemo, useEffect, useLayoutEffect, useState, Fragment } from 'react';
 import { renderToString } from 'react-dom/server';
 import {
   MapContainer, TileLayer, Marker, Popup, Tooltip,
@@ -623,11 +623,14 @@ function LabelMarker({
   const truncatedName = displayName.length > 25 ? `${displayName.slice(0, 25)}…` : displayName;
 
   // Обновляем иконку без пересоздания маркера — попап остаётся открытым.
-  // В react-leaflet v5 ref на <Marker> — это напрямую L.Marker инстанс.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const m = markerRef.current;
-    if (m && typeof m.setIcon === 'function') {
-      m.setIcon(createLabelIcon(label.color, index + 1, label.icon));
+    if (!m) return;
+    const newIcon = createLabelIcon(label.color, index + 1, label.icon);
+    if (typeof m.setIcon === 'function') {
+      m.setIcon(newIcon);
+    } else if (m._icon) {
+      m._icon.innerHTML = newIcon.options.html ?? '';
     }
   }, [label.icon, label.color, index]);
 
