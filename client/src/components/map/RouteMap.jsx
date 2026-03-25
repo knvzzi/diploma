@@ -634,21 +634,17 @@ function LabelMarker({
   const displayName = (label.name || 'Метка').trim();
   const truncatedName = displayName.length > 25 ? `${displayName.slice(0, 25)}…` : displayName;
 
-  // Обновляем DOM маркера напрямую — без пересоздания, без закрытия попапа.
+  // Обновляем иконку маркера через setIcon — попап остаётся открытым т.к. привязан к маркеру, не к иконке.
   useLayoutEffect(() => {
     const m = markerRef.current;
-    if (!m || !m._icon) return;
-
-    // Обновляем цвет фона капли
-    const teardrop = m._icon.querySelector('.poi-teardrop-marker');
-    if (teardrop) {
-      teardrop.style.backgroundColor = label.color ?? '#ef4444';
-    }
-
-    // Обновляем SVG иконки внутри капли
-    const inner = m._icon.querySelector('.poi-teardrop-marker__inner');
-    if (inner) {
-      inner.innerHTML = renderLabelIconSvg(label.icon);
+    if (!m) return;
+    const wasOpen = m.isPopupOpen();
+    const newIcon = createLabelIcon(label.color, index + 1, label.icon);
+    m.setIcon(newIcon);
+    // Если попап был открыт — переоткрываем (setIcon в Leaflet закрывает попап)
+    if (wasOpen) {
+      // requestAnimationFrame даёт Leaflet время перерисовать иконку перед открытием попапа
+      requestAnimationFrame(() => { m.openPopup(); });
     }
   }, [label.icon, label.color, index]);
 
