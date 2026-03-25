@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, useLayoutEffect, useState, Fragment } from 'react';
+import React, { useRef, useMemo, useEffect, useLayoutEffect, useState, Fragment } from 'react';
 import { renderToString } from 'react-dom/server';
 import {
   MapContainer, TileLayer, Marker, Popup, Tooltip,
@@ -63,6 +63,18 @@ function createLabelIcon(color, _index, iconType = 'map-pin') {
   const Icon = entry?.Icon ?? POI_ICONS[0]?.Icon;
   if (!Icon) return L.divIcon({ html: '<div></div>', iconSize: [36, 36], iconAnchor: [18, 36] });
   return createCustomMarker(color ?? '#ef4444', Icon);
+}
+
+/** Рендерит SVG строку для иконки метки (для прямого обновления DOM). */
+function renderLabelIconSvg(iconType = 'map-pin') {
+  const entry = POI_ICONS.find((i) => i.id === iconType);
+  const Icon = entry?.Icon ?? POI_ICONS[0]?.Icon;
+  if (!Icon) return '';
+  try {
+    return renderToString(React.createElement(Icon, { size: 16, color: '#ffffff', strokeWidth: 2.5 }));
+  } catch {
+    return '';
+  }
 }
 
 /** Минимальный зум для отображения подсказок расстояния на отрезках (при отдалении скрываем, чтобы не засорять карту). */
@@ -626,13 +638,17 @@ function LabelMarker({
   useLayoutEffect(() => {
     const m = markerRef.current;
     if (!m || !m._icon) return;
-    const newIcon = createLabelIcon(label.color, index + 1, label.icon);
-    // Заменяем только внутренний HTML иконки, не трогая сам элемент маркера
-    m._icon.innerHTML = newIcon.options.html ?? '';
-    // Обновляем цвет фона капли напрямую
+
+    // Обновляем цвет фона капли
     const teardrop = m._icon.querySelector('.poi-teardrop-marker');
     if (teardrop) {
       teardrop.style.backgroundColor = label.color ?? '#ef4444';
+    }
+
+    // Обновляем SVG иконки внутри капли
+    const inner = m._icon.querySelector('.poi-teardrop-marker__inner');
+    if (inner) {
+      inner.innerHTML = renderLabelIconSvg(label.icon);
     }
   }, [label.icon, label.color, index]);
 
