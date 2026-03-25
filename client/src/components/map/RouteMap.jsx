@@ -607,6 +607,69 @@ export function getSurfaceLayers(surfaceValue, dayColor, isActive = false) {
  * readOnly: при true скрывается панель инструментов (MapToolbar), отключаются клики по карте
  * (добавление точек/меток) и перетаскивание маркеров — режим только просмотра.
  */
+
+/**
+ * Отдельный компонент для одной метки POI.
+ * key={label.id} — маркер НЕ пересоздаётся при смене иконки/цвета.
+ * useEffect вызывает marker.setIcon() напрямую — попап остаётся открытым.
+ */
+function LabelMarker({
+  label, index, readOnly,
+  labelRefs, handleLabelSave, removeLabel, dragLabel,
+  setLightboxPhotos, setLightboxIndex, setLightboxOpen,
+}) {
+  const markerRef = useRef(null);
+  const displayName = (label.name || 'Метка').trim();
+  const truncatedName = displayName.length > 25 ? `${displayName.slice(0, 25)}…` : displayName;
+
+  // Обновляем иконку без пересоздания маркера — попап остаётся открытым.
+  // В react-leaflet v5 ref на <Marker> — это напрямую L.Marker инстанс.
+  useEffect(() => {
+    const m = markerRef.current;
+    if (m && typeof m.setIcon === 'function') {
+      m.setIcon(createLabelIcon(label.color, index + 1, label.icon));
+    }
+  }, [label.icon, label.color, index]);
+
+  return (
+    <Marker
+      ref={(ref) => {
+        markerRef.current = ref;
+        labelRefs.current[label.id] = ref;
+      }}
+      position={[label.lat, label.lng]}
+      icon={createLabelIcon(label.color, index + 1, label.icon)}
+      draggable={!readOnly}
+      eventHandlers={readOnly ? undefined : {
+        dragstart: (e) => { e.target.closePopup(); },
+        dragend:   (e) => {
+          const { lat, lng } = e.target.getLatLng();
+          dragLabel(label.id, { lat, lng });
+        },
+      }}
+    >
+      <Tooltip permanent direction="right" offset={[12, 0]} className="poi-label-tooltip">
+        {truncatedName}
+      </Tooltip>
+      <Popup minWidth={280} maxWidth={280} className="point-edit-popup">
+        <PointPopupContent
+          point={label}
+          index={index + 1}
+          onSave={handleLabelSave}
+          onDelete={removeLabel}
+          onPhotoClick={(photos, idx) => {
+            if (Array.isArray(photos) && photos.length > 0) {
+              setLightboxPhotos(photos);
+              setLightboxIndex(Math.max(0, Math.min(idx, photos.length - 1)));
+              setLightboxOpen(true);
+            }
+          }}
+        />
+      </Popup>
+    </Marker>
+  );
+}
+
 export default function RouteMap({ hoveredLocation: hoveredLocationProp = null, readOnly = false }) {
   const [expandedSection, setExpandedSection] = useState(null); // 'layers' | 'places' | null
   const [mapInstance, setMapInstance] = useState(null);
@@ -984,45 +1047,21 @@ export default function RouteMap({ hoveredLocation: hoveredLocationProp = null, 
          *  Клик по кнопке в попапе может всплыть до карты → добавление точки.
          *  Решение: stopPropagation в PointPopupContent.
          */}
-        {labels.map((label, index) => {
-          const displayName = (label.name || 'Метка').trim();
-          const truncatedName = displayName.length > 25 ? `${displayName.slice(0, 25)}…` : displayName;
-          return (
-            <Marker
-              key={`${label.id}-${label.icon ?? 'map-pin'}-${label.color ?? '#ef4444'}`}
-              position={[label.lat, label.lng]}
-              icon={createLabelIcon(label.color, index + 1, label.icon)}
-              draggable={!readOnly}
-              ref={(ref) => { labelRefs.current[label.id] = ref; }}
-              eventHandlers={readOnly ? undefined : {
-                dragstart: (e) => { e.target.closePopup(); },
-                dragend:   (e) => {
-                  const { lat, lng } = e.target.getLatLng();
-                  dragLabel(label.id, { lat, lng });
-                },
-              }}
-            >
-              <Tooltip permanent direction="right" offset={[12, 0]} className="poi-label-tooltip">
-                {truncatedName}
-              </Tooltip>
-              <Popup minWidth={280} maxWidth={280} className="point-edit-popup">
-                <PointPopupContent
-                  point={label}
-                  index={index + 1}
-                  onSave={handleLabelSave}
-                  onDelete={removeLabel}
-                  onPhotoClick={(photos, idx) => {
-                    if (Array.isArray(photos) && photos.length > 0) {
-                      setLightboxPhotos(photos);
-                      setLightboxIndex(Math.max(0, Math.min(idx, photos.length - 1)));
-                      setLightboxOpen(true);
-                    }
-                  }}
-                />
-              </Popup>
-            </Marker>
-          );
-        })}
+        {labels.map((label, index) => (
+          <LabelMarker
+            key={label.id}
+            label={label}
+            index={index}
+            readOnly={readOnly}
+            labelRefs={labelRefs}
+            handleLabelSave={handleLabelSave}
+            removeLabel={removeLabel}
+            dragLabel={dragLabel}
+            setLightboxPhotos={setLightboxPhotos}
+            setLightboxIndex={setLightboxIndex}
+            setLightboxOpen={setLightboxOpen}
+          />
+        ))}
 
         {/*
          * ── POI-маркеры (интересные места из Overpass API) ──────────────────
