@@ -161,9 +161,34 @@ app.get('/api/routes/public', async (req, res) => {
   }
 });
 
-// Разрешаем запросы с фронтенда (Vite dev-сервер на порту 5173)
+// Разрешаем запросы с локального фронта и прод-доменов Vercel.
+// Важно для превью-деплоев: *.vercel.app
+const allowedOrigins = new Set(
+  [
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://diploma-umber.vercel.app',
+  ].filter(Boolean),
+);
+
+const isVercelPreviewOrigin = (origin) => {
+  try {
+    return /\.vercel\.app$/i.test(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+};
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin(origin, callback) {
+    // origin отсутствует у части non-browser запросов (healthchecks, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.has(origin) || isVercelPreviewOrigin(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
 }));
 
