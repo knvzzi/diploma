@@ -610,29 +610,25 @@ export function getSurfaceLayers(surfaceValue, dayColor, isActive = false) {
 
 /**
  * Отдельный компонент для одной метки POI.
- * key={label.id} — маркер НЕ пересоздаётся при смене иконки/цвета.
- * useEffect вызывает marker.setIcon() напрямую — попап остаётся открытым.
+ * При смене иконки/цвета маркер пересоздаётся (key меняется),
+ * но попап переоткрывается программно — пользователь не замечает перерисовки.
  */
 function LabelMarker({
   label, index, readOnly,
   labelRefs, handleLabelSave, removeLabel, dragLabel,
   setLightboxPhotos, setLightboxIndex, setLightboxOpen,
+  openPopupId, setOpenPopupId,
 }) {
   const markerRef = useRef(null);
   const displayName = (label.name || 'Метка').trim();
   const truncatedName = displayName.length > 25 ? `${displayName.slice(0, 25)}…` : displayName;
 
-  // Обновляем иконку без пересоздания маркера — попап остаётся открытым.
+  // Если этот маркер должен быть с открытым попапом — открываем после монтирования.
   useLayoutEffect(() => {
-    const m = markerRef.current;
-    if (!m) return;
-    const newIcon = createLabelIcon(label.color, index + 1, label.icon);
-    if (typeof m.setIcon === 'function') {
-      m.setIcon(newIcon);
-    } else if (m._icon) {
-      m._icon.innerHTML = newIcon.options.html ?? '';
+    if (openPopupId === label.id && markerRef.current) {
+      markerRef.current.openPopup();
     }
-  }, [label.icon, label.color, index]);
+  });
 
   return (
     <Marker
@@ -644,8 +640,10 @@ function LabelMarker({
       icon={createLabelIcon(label.color, index + 1, label.icon)}
       draggable={!readOnly}
       eventHandlers={readOnly ? undefined : {
-        dragstart: (e) => { e.target.closePopup(); },
-        dragend:   (e) => {
+        popupopen:  () => { setOpenPopupId(label.id); },
+        popupclose: () => { setOpenPopupId((prev) => prev === label.id ? null : prev); },
+        dragstart:  (e) => { e.target.closePopup(); },
+        dragend:    (e) => {
           const { lat, lng } = e.target.getLatLng();
           dragLabel(label.id, { lat, lng });
         },
@@ -729,6 +727,8 @@ export default function RouteMap({ hoveredLocation: hoveredLocationProp = null, 
 
   /** Рефы на Leaflet-маркеры меток для программного закрытия попапа. */
   const labelRefs = useRef({});
+  /** ID метки, попап которой должен быть открыт (переоткрывается после смены иконки/цвета). */
+  const [openPopupId, setOpenPopupId] = useState(null);
 
   const handleLabelSave = (id, meta, options) => {
     updateLabelMeta(id, meta);
@@ -1052,7 +1052,7 @@ export default function RouteMap({ hoveredLocation: hoveredLocationProp = null, 
          */}
         {labels.map((label, index) => (
           <LabelMarker
-            key={label.id}
+            key={`${label.id}-${label.icon ?? 'map-pin'}-${label.color ?? '#ef4444'}`}
             label={label}
             index={index}
             readOnly={readOnly}
@@ -1063,6 +1063,8 @@ export default function RouteMap({ hoveredLocation: hoveredLocationProp = null, 
             setLightboxPhotos={setLightboxPhotos}
             setLightboxIndex={setLightboxIndex}
             setLightboxOpen={setLightboxOpen}
+            openPopupId={openPopupId}
+            setOpenPopupId={setOpenPopupId}
           />
         ))}
 
