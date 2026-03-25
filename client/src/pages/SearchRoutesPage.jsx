@@ -1390,7 +1390,7 @@ export default function SearchRoutesPage() {
   // ── Инициализация карты ──────────────────────────────────────────────────
 
   // Центр и зум — как в конструкторе (RouteMap)
-  const MAP_CENTER = [55.751244, 37.618423];
+  const MAP_CENTER = [53.9045, 27.5615];
   const MAP_ZOOM = 10;
 
   useEffect(() => {

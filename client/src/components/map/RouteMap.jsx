@@ -21,7 +21,7 @@ import { POI_ICONS } from './PoiIconPicker';
 import { createCustomMarker } from '@/utils/markerUtils';
 import PhotoLightbox from '@/components/PhotoLightbox';
 
-const DEFAULT_CENTER = [55.751244, 37.618423];
+const DEFAULT_CENTER = [53.9045, 27.5615];
 const DEFAULT_ZOOM   = 10;
 
 // ─── Иконки маркеров ──────────────────────────────────────────────────────────
@@ -989,7 +989,7 @@ export default function RouteMap({ hoveredLocation: hoveredLocationProp = null, 
           const truncatedName = displayName.length > 25 ? `${displayName.slice(0, 25)}…` : displayName;
           return (
             <Marker
-              key={label.id}
+              key={`${label.id}-${label.icon ?? 'map-pin'}-${label.color ?? '#ef4444'}`}
               position={[label.lat, label.lng]}
               icon={createLabelIcon(label.color, index + 1, label.icon)}
               draggable={!readOnly}

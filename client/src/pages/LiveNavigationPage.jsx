@@ -10,7 +10,7 @@ import { POI_ICONS, getPoiIconSvg } from '@/components/map/PoiIconPicker';
 import { createCustomMarker } from '@/utils/markerUtils';
 
 const DAY_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-const MAP_CENTER = [55.751244, 37.618423];
+const MAP_CENTER = [53.9045, 27.5615];
 const MAP_ZOOM = 12;
 
 function formatDistance(meters) {

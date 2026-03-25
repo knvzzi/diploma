@@ -97,6 +97,14 @@ const useAuthStore = create((set) => ({
 
       if (error) throw error;
 
+      // Supabase при регистрации уже существующего email не возвращает ошибку,
+      // но отдаёт user с пустым массивом identities — используем это как признак дубля.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        const msg = 'Пользователь с таким email уже зарегистрирован.';
+        set({ error: msg, isLoading: false });
+        return { error: msg };
+      }
+
       set({ user: data.user, isLoading: false });
       return { error: null };
     } catch (err) {
