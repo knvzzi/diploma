@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Trophy, Ruler, Mountain, Loader2 } from 'lucide-react';
@@ -76,7 +76,6 @@ function getPathsByDay(route) {
  */
 export default function RouteCompletedPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -199,13 +198,6 @@ export default function RouteCompletedPage() {
     return (
       <div className="flex h-[100dvh] w-full flex-col items-center justify-center gap-4 bg-[#FFF9F0] p-6">
         <p className="text-center text-neutral-700">{error ?? 'Маршрут не найден'}</p>
-        <button
-          type="button"
-          onClick={() => navigate('/search')}
-          className="rounded-xl bg-yellow-500 px-5 py-2.5 text-sm font-semibold text-black"
-        >
-          К списку маршрутов
-        </button>
       </div>
     );
   }
