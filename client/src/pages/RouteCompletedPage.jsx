@@ -269,15 +269,6 @@ export default function RouteCompletedPage() {
           </div>
         )}
 
-        {/* Единственная кнопка */}
-        <button
-          type="button"
-          onClick={() => navigate('/search')}
-          className="mt-8 w-full rounded-xl bg-yellow-500 px-4 py-4 text-base font-bold text-black shadow-sm transition-opacity hover:opacity-90 active:opacity-75"
-        >
-          Вернуться к списку маршрутов
-        </button>
-
       </div>
     </div>
   );
