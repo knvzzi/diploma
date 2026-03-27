@@ -18,7 +18,9 @@ const DEFAULT_MARKER_COLOR = '#3b82f6';
  */
 export function createCustomMarker(color, IconComponent) {
   const safeColor = color && /^#[0-9A-Fa-f]{6}$/.test(color) ? color : DEFAULT_MARKER_COLOR;
-  const Icon = typeof IconComponent === 'function' ? IconComponent : MapPin;
+  // Lucide-иконки могут быть forwardRef-компонентами (не typeof === 'function').
+  // Передаём любой компонент как есть и фолбэчим в catch.
+  const Icon = IconComponent ?? MapPin;
   let iconSvg;
   try {
     iconSvg = renderToString(
