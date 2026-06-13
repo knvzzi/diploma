@@ -42,6 +42,7 @@ import useProfileStore from '@/store/useProfileStore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import RouteSortSelect from '@/components/RouteSortSelect';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
@@ -713,16 +714,11 @@ export default function ProfilePage() {
             {isFiltersOpen && (
               <div className="mb-4 rounded-xl border border-border bg-muted/30 p-4">
                 <p className="mb-3 text-xs font-medium text-muted-foreground">Сортировка</p>
-                <select
+                <RouteSortSelect
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="mb-4 h-9 w-full max-w-xs rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="newest">Сначала новые</option>
-                  <option value="popular">Сначала популярные</option>
-                  <option value="shortest">Сначала короткие</option>
-                  <option value="longest">Сначала длинные</option>
-                </select>
+                  onValueChange={setSortBy}
+                  triggerClassName="mb-4 h-9 w-full max-w-xs rounded-lg border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-ring"
+                />
 
                 <p className="mb-2 text-xs font-medium text-muted-foreground">Тип передвижения</p>
                 <div className="mb-4 flex flex-wrap gap-2">

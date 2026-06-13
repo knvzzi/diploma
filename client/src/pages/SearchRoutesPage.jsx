@@ -55,6 +55,7 @@ import { useAdminReadOnly } from '@/hooks/useAdminReadOnly';
 import MapLayersControl from '@/components/map/MapLayerSwitcher';
 import MapSearch from '@/components/map/MapSearch';
 import { RouteCard, getRouteAuthorLabel, getRouteAuthorAvatar } from '@/components/RouteCard';
+import RouteSortSelect from '@/components/RouteSortSelect';
 import ReportModal from '@/components/ReportModal';
 import {
   formatDistance,
@@ -2191,16 +2192,11 @@ export default function SearchRoutesPage() {
                   </div>
 
                   <p className="mb-3 text-xs font-medium text-neutral-600">Сортировка</p>
-                  <select
+                  <RouteSortSelect
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="mb-4 h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  >
-                    <option value="newest">Сначала новые</option>
-                    <option value="popular">Сначала популярные</option>
-                    <option value="shortest">Сначала короткие</option>
-                    <option value="longest">Сначала длинные</option>
-                  </select>
+                    onValueChange={setSortBy}
+                    triggerClassName="mb-4 h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-800 focus:ring-2 focus:ring-primary/30"
+                  />
 
                   <p className="mb-2 text-xs font-medium text-neutral-600">Тип</p>
                   <div className="mb-4 flex flex-wrap gap-2">
